@@ -1,0 +1,12 @@
+POINT S FIDELITE — VERSION DE DEMONSTRATION
+
+Deploiement Vercel :
+1. Decompresser ce ZIP.
+2. Placer les fichiers index.html et vercel.json a la racine d'un depot GitHub.
+3. Sur vercel.com, choisir Add New > Project, importer ce depot GitHub.
+4. Framework Preset : Other ; Root Directory : ./ ; cliquer Deploy.
+5. Tester l'URL attribuee par Vercel sur mobile et ordinateur.
+
+IMPORTANT : version prototype, sans base de donnees ni authentification securisee.
+Les avis Google affiches ne sont pas synchronises avec Google.
+Ne pas utiliser avec des donnees personnelles reelles ou pour attribuer de vrais points.
