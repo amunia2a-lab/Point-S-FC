@@ -4581,6 +4581,34 @@ async function refresh(){const n=++serial;if(!token)return;const list=$('mclList
 const count=document.querySelector('#mc-dashboard .mc-overview .mc-big');if(count)count.textContent=String(clients.length);}
 catch(e){clients=[];current=null;const list=$('mclList');if(list)list.innerHTML='<div class="ps-live-msg">Impossible de charger les clients : '+esc(e.message)+'</div>'}}
 window.addEventListener('ps-auth-session',e=>{token=e.detail.merchant?e.detail.token:null;serial++;clients=[];current=null;if(token)setTimeout(refresh,300);else{$('merchantMode')?.classList.remove('ps-live-ready');const list=$('mclList');if(list)list.innerHTML='';}});
+// La fiche client utilise désormais le RPC sécurisé, jamais une simulation locale.
+window.confirmClientManualPoints=async function(){
+ const amount=Number(document.getElementById('cmpPoints')?.textContent||0);
+ if(!token||!current){alert('Sélectionnez un client connecté à Supabase.');return}
+ if(!Number.isInteger(amount)||amount<1||amount>99999){alert('Nombre de points invalide.');return}
+ const accountId=current.id;
+ const btn=document.querySelector('#clientManualPointsModal .cmp-confirm');
+ if(btn?.disabled)return;
+ if(btn){btn.disabled=true;btn.textContent='Enregistrement…'}
+ try{
+  const r=await fetch(BASE+'/rest/v1/rpc/ps_ajouter_points',{
+   method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+   body:JSON.stringify({p_compte_id:accountId,p_points:amount,p_commentaire:'Ajout depuis fiche client'})
+  });
+  const raw=await r.text();let result;try{result=raw?JSON.parse(raw):null}catch{result=raw}
+  if(!r.ok)throw Error(result?.message||result?.error||'Erreur Supabase '+r.status);
+  // Relire le solde confirmé par la base, et non incrémenter une valeur fictive.
+  const rows=await get('/rest/v1/comptes_fidelite?select=id,solde_points,created_at,clients(id,prenom,nom,code_client)&id=eq.'+encodeURIComponent(accountId)+'&limit=1');
+  if(!rows.length)throw Error('Points enregistrés, mais lecture du solde impossible.');
+  const idx=clients.findIndex(x=>x.id===accountId);
+  if(idx>=0)clients[idx]=rows[0];
+  current=rows[0];renderList();renderDetail();
+  if(typeof window.closeClientManualPoints==='function')window.closeClientManualPoints();
+  await openAccount(accountId);
+  alert('+'+amount+' points enregistrés dans Supabase. Nouveau solde : '+(Number(rows[0].solde_points)||0)+' points.');
+ }catch(e){alert('Vérification nécessaire : '+e.message+' Ne recommencez pas avant de vérifier le solde pour éviter un double ajout.')}
+ finally{if(btn){btn.disabled=false;btn.textContent='Ajouter les points'}}
+};
 document.addEventListener('change',e=>{if(e.target?.id==='mcGarage'&&token){current=null;refresh()}});
 document.addEventListener('input',e=>{if(e.target?.id==='mclSearch'&&token)renderList()});
 document.addEventListener('click',e=>{const b=e.target.closest?.('.ps-live-client');if(b&&token){e.preventDefault();e.stopPropagation();openAccount(b.dataset.account)}},true);
