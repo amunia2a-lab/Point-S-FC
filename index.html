@@ -4620,4 +4620,35 @@ function init(){const list=$('mclList');if(list)list.innerHTML='<div class="ps-l
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
+
+<script id="ps-fiche-actions-reelles-20261013">
+/* Les deux grandes actions réutilisent les parcours sécurisés existants. */
+(function(){
+ document.addEventListener('click',function(e){
+  var btn=e.target.closest('#mc-clientdetail .mcf-actions button');
+  if(!btn)return;
+  e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+  if(btn.classList.contains('mcf-add')){
+   if(typeof window.openClientManualPoints==='function')window.openClientManualPoints();
+   return;
+  }
+  if(btn.classList.contains('mcf-gift')){
+   /* Ne pas appeler l'ancien sélecteur fictif, qui n'écrit pas dans Supabase. */
+   var currentName=document.querySelector('#mc-clientdetail .mcf-identity > strong')?.textContent?.trim();
+   if(typeof window.merchantView==='function')window.merchantView('dashboard');
+   setTimeout(function(){
+    var select=document.getElementById('psRpcClient');
+    if(!select){alert('Le module sécurisé des récompenses est indisponible.');return;}
+    var options=Array.from(select.options);
+    var match=options.find(function(o){return currentName&&o.textContent.trim().includes(currentName)});
+    if(match){select.value=match.value;select.dispatchEvent(new Event('change',{bubbles:true}));}
+    var load=document.getElementById('psRpcLoadRewards');
+    if(!load){load=Array.from(document.querySelectorAll('#psRpcArea button')).find(function(b){return /charger les récompenses/i.test(b.textContent)});}
+    if(load)load.click();
+    document.getElementById('psRpcArea')?.scrollIntoView({behavior:'smooth',block:'center'});
+   },150);
+  }
+ },true);
+})();
+</script>
 </body></html>
